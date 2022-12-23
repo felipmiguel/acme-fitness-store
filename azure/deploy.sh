@@ -5,7 +5,7 @@ set -euo pipefail
 readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 readonly APPS_ROOT="${PROJECT_ROOT}/apps"
 
-SUFFIX='-pr'
+SUFFIX='-load-fm'
 
 if [ -z "SUFFIX" ]; then SUFFIX=$(openssl rand -hex 3); else echo $SUFFIX; fi
 
@@ -43,8 +43,10 @@ fi
 
 readonly CONFIG_REPO=https://github.com/Azure-Samples/acme-fitness-store-config
 
-RESOURCE_GROUP="rg-acme-fitness${SUFFIX}"
-SPRING_APPS_SERVICE="spring-acme-fitness${SUFFIX}"
+# RESOURCE_GROUP="rg-acme-fitness${SUFFIX}"
+# SPRING_APPS_SERVICE="spring-acme-fitness${SUFFIX}"
+RESOURCE_GROUP="Fitness-Store-Prod"
+SPRING_APPS_SERVICE="fitness-store-prod"
 readonly AZURE_AD_APP_NAME="acme-fitness${SUFFIX}"
 REGION='eastus'
 
@@ -247,6 +249,7 @@ function deploy_cart_service() {
     --deployment default \
     --app $CART_SERVICE \
     --connection $CART_SERVICE_REDIS_CONNECTION | jq -r '.configurations[0].value')
+    echo $redis_conn_str
   local gateway_url=$(az spring gateway show | jq -r '.properties.url')
   local app_insights_key=$(az spring build-service builder buildpack-binding show -n default | jq -r '.properties.launchProperties.properties."connection-string"')
 
@@ -294,6 +297,7 @@ function deploy_catalog_service() {
     --config-file-pattern catalog \
     --jvm-options='-XX:MaxMetaspaceSize=148644K' \
     --source-path "$APPS_ROOT/acme-catalog" \
+    --build-env BP_JVM_VERSION=17.* \
     --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
 }
 
@@ -301,8 +305,9 @@ function deploy_payment_service() {
   echo "Deploying payment-service application"
 
   az spring app deploy --name $PAYMENT_SERVICE \
-    --config-file-pattern payment \
+    --config-file-pattern "payment/default" \
     --jvm-options='-XX:MaxMetaspaceSize=148644K' \
+    --build-env BP_JVM_VERSION=17.* \
     --source-path "$APPS_ROOT/acme-payment"
 }
 
@@ -318,29 +323,29 @@ function deploy_frontend_app() {
 }
 
 function main() {
-  create_spring_cloud
+  # create_spring_cloud
   configure_defaults
-  create_dependencies
-  create_builder
-  configure_acs
-  configure_sso
-  configure_gateway
+  # create_dependencies
+  # create_builder
+  # configure_acs
+  # configure_sso
+  # configure_gateway
 
-  create_identity_service
-  create_cart_service
-  create_order_service
-  create_payment_service
-  create_catalog_service
-  create_frontend_app
+  # create_identity_service
+  # create_cart_service
+  # create_order_service
+  # create_payment_service
+  # create_catalog_service
+  # create_frontend_app
 
-  deploy_identity_service
+  # deploy_identity_service
   deploy_cart_service
-  deploy_order_service
-  deploy_payment_service
-  deploy_catalog_service
+  # deploy_order_service
+  deploy_payment_service 
+  deploy_catalog_service 
   deploy_frontend_app
 
-  update_sso_portalurl
+  # update_sso_portalurl
 
 }
 
