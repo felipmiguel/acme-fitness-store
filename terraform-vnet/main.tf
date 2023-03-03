@@ -134,6 +134,16 @@ module "appgateway" {
   appgateway_subnet_id = module.network.appgateway_subnet_id
 }
 
+module "cosmosdb" {
+  source           = "./modules/cosmosdb"
+  resource_group   = azurerm_resource_group.main.name
+  application_name = var.application_name
+  environment      = local.environment
+  location         = var.location
+
+  subnet_id = module.network.database_subnet_id
+}
+
 // cart-service
 module "cart_service" {
   source                   = "./modules/app"
