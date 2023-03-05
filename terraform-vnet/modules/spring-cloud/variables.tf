@@ -67,5 +67,20 @@ variable "config_server_git_uri" {
 variable "config_patterns" {
   type        = list(string)
   description = "A list of patterns that match the configuration files"
-  
+
+}
+
+variable "azure_application_insights_connection_string" {
+  type        = string
+  description = "The Azure Application Insights connection string"
+}
+
+variable "azure_application_insights_sample_rate" {
+  type        = number
+  description = "The Azure Application Insights sampling rate"
+}
+
+variable "app_owners" {
+  type        = list(string)
+  description = "A list of owners for the application"  
 }

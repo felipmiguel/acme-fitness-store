@@ -101,15 +101,15 @@ resource "azurerm_windows_virtual_machine" "jumpbox_vm" {
 
 }
 
-data "azuread_user" "vm-admin" {
-  user_principal_name = var.aad_admin_username
-}
+# data "azuread_user" "vm-admin" {
+#   user_principal_name = var.aad_admin_username
+# }
 
-resource "azurerm_role_assignment" "vm-admins" {
-  scope                = azurerm_windows_virtual_machine.jumpbox_vm.id
-  role_definition_name = "Virtual Machine Administrator Login"
-  principal_id         = data.azuread_user.vm-admin.object_id
-}
+# resource "azurerm_role_assignment" "vm-admins" {
+#   scope                = azurerm_windows_virtual_machine.jumpbox_vm.id
+#   role_definition_name = "Virtual Machine Administrator Login"
+#   principal_id         = data.azuread_user.vm-admin.object_id
+# }
 
 resource "azurerm_virtual_machine_extension" "aad" {
   name                       = "aad-login-for-windows"

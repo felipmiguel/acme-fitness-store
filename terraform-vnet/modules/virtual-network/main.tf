@@ -63,11 +63,11 @@ resource "azurerm_subnet" "database_subnet" {
   resource_group_name  = var.resource_group
   virtual_network_name = azurerm_virtual_network.virtual_network.name
   address_prefixes     = [var.database_subnet_prefix]
-  service_endpoints   = ["Microsoft.Storage"]
+  service_endpoints    = ["Microsoft.Storage"]
   delegation {
     name = "fs"
     service_delegation {
-      name = "Microsoft.DBforPostgreSQL/flexibleServers"
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
@@ -86,7 +86,7 @@ resource "azurerm_subnet" "redis_subnet" {
   address_prefixes     = [var.redis_subnet_prefix]
 }
 
-resource "azurecaf_name" "loadtests_subnet"{
+resource "azurecaf_name" "loadtests_subnet" {
   name          = var.application_name
   resource_type = "azurerm_subnet"
   suffixes      = [var.environment, "loadtests"]
@@ -102,14 +102,14 @@ resource "azurerm_subnet" "loadtests_subnet" {
 resource "azurecaf_name" "jumpbox_subnet" {
   name          = var.application_name
   resource_type = "azurerm_subnet"
-  suffixes      = [var.environment, "jumpbox"]  
+  suffixes      = [var.environment, "jumpbox"]
 }
 
 resource "azurerm_subnet" "jumpbox_subnet" {
   name                 = azurecaf_name.jumpbox_subnet.result
   resource_group_name  = var.resource_group
   virtual_network_name = azurerm_virtual_network.virtual_network.name
-  address_prefixes     = [var.jumpbox_subnet_prefix]  
+  address_prefixes     = [var.jumpbox_subnet_prefix]
 }
 
 
@@ -118,18 +118,33 @@ resource "azurerm_subnet" "bastion_subnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = var.resource_group
   virtual_network_name = azurerm_virtual_network.virtual_network.name
-  address_prefixes     = [var.bastion_subnet_prefix]  
+  address_prefixes     = [var.bastion_subnet_prefix]
 }
 
 resource "azurecaf_name" "appgateway_subnet" {
   name          = var.application_name
   resource_type = "azurerm_subnet"
-  suffixes      = [var.environment, "appgateway"]  
+  suffixes      = [var.environment, "appgateway"]
 }
 
 resource "azurerm_subnet" "appgateway_subnet" {
   name                 = azurecaf_name.appgateway_subnet.result
   resource_group_name  = var.resource_group
   virtual_network_name = azurerm_virtual_network.virtual_network.name
-  address_prefixes     = [var.appgateway_subnet_prefix]  
+  address_prefixes     = [var.appgateway_subnet_prefix]
+}
+
+
+resource "azurecaf_name" "cosmos_subnet" {
+  name          = var.application_name
+  resource_type = "azurerm_subnet"
+  suffixes      = [var.environment, "cosmos"]
+}
+
+resource "azurerm_subnet" "cosmos_subnet" {
+  name                 = azurecaf_name.cosmos_subnet.result
+  resource_group_name  = var.resource_group
+  virtual_network_name = azurerm_virtual_network.virtual_network.name
+  address_prefixes     = [var.cosmos_subnet_prefix]
+  service_endpoints    = ["Microsoft.AzureCosmosDB"]
 }

@@ -22,7 +22,7 @@ output "cloud_gateway_id" {
   description = "Cloud Gateway ID"
 }
 
-# output "spring_cloud_service_app_fqdn" {
-#   value       = azurerm_spring_cloud_app.application.fqdn
-#   description = "Application FQDN"
-# }
+output "spring_cloud_gateway_url" {
+  value       = azurerm_spring_cloud_gateway.spring_gateway.url
+  description = "Application FQDN"
+}

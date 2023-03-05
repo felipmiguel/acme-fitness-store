@@ -1,8 +1,8 @@
-# resource "random_string" "random_suffix" {
-#   length = 6
-#   lower  = true
-#   special = false
-# }
+resource "random_string" "random_suffix" {
+  length  = 6
+  lower   = true
+  special = false
+}
 # Azure Spring Apps is not yet supported in azurecaf_name
 locals {
   spring_cloud_service_name = "fitness-store-prod-vnet"
@@ -12,7 +12,7 @@ locals {
   azure_spring_apps_provisioner_object_id = "d2531223-68f9-459e-b225-5592f90d145e"
 
   # Azure AD application registration name
-  # azure_ad_application_name = "${var.application_name}-${random_string.random_suffix.result}"
+  azure_ad_application_name = "${var.application_name}-${random_string.random_suffix.result}"
 }
 
 # Assign Owner role to Azure Spring Apps Resource Provider on the Virtual Network used by the deployed service
@@ -48,14 +48,19 @@ resource "azurerm_spring_cloud_service" "application" {
   service_registry_enabled = true
 
   log_stream_public_endpoint_enabled = true
-  build_agent_pool_size = "S4"
+  build_agent_pool_size              = "S4"
+
+  trace {
+    connection_string = var.azure_application_insights_connection_string
+    sample_rate       = var.azure_application_insights_sample_rate
+  }
 }
 
 resource "azurerm_spring_cloud_configuration_service" "acs" {
   name                    = "default"
   spring_cloud_service_id = azurerm_spring_cloud_service.application.id
   repository {
-    name     = "${var.application_name}-config}"
+    name     = "${var.application_name}-configterr"
     patterns = var.config_patterns
     uri      = var.config_server_git_uri
     label    = "main"
@@ -69,7 +74,7 @@ resource "azurerm_spring_cloud_configuration_service" "acs" {
 resource "azurerm_spring_cloud_builder" "builder" {
   name                    = "no-bindings-builder"
   spring_cloud_service_id = azurerm_spring_cloud_service.application.id
-  
+
   stack {
     id      = "io.buildpacks.stacks.bionic"
     version = "full"
@@ -86,22 +91,28 @@ resource "azurerm_spring_cloud_builder" "builder" {
 }
 
 resource "azurerm_spring_cloud_dev_tool_portal" "dev_tool_portal" {
-  name                          = "default"
-  spring_cloud_service_id       = azurerm_spring_cloud_service.application.id
-  public_network_access_enabled = true
+  name                            = "default"
+  spring_cloud_service_id         = azurerm_spring_cloud_service.application.id
+  public_network_access_enabled   = true
   application_accelerator_enabled = true
   application_live_view_enabled   = true
 }
 
-# resource "azuread_application" "gateway_app_registration" {
-#   display_name = local.azure_ad_application_name
-#   # web {
-#   #   redirect_uris = [azurerm_spring_cloud_service.]
-#   # }
-# }
+data "azuread_user" "app_owners" {
+  count = length(var.app_owners)
+  user_principal_name = var.app_owners[count.index]
+}
+
+resource "azuread_application" "gateway_app_registration" {
+  display_name = local.azure_ad_application_name
+  owners = data.azuread_user.app_owners.*.object_id
+  # web {
+  #   redirect_uris = [azurerm_spring_cloud_gateway.spring_gateway.url]
+  # }
+}
 
 # resource "azuread_application_password" "gateway_app_password" {
-#   application_object_id = azuread_application.gateway_app_registration.object_id  
+#   application_object_id = azuread_application.gateway_app_registration.object_id
 # }
 
 resource "azurerm_spring_cloud_gateway" "spring_gateway" {
@@ -109,13 +120,19 @@ resource "azurerm_spring_cloud_gateway" "spring_gateway" {
   public_network_access_enabled = true
   spring_cloud_service_id       = azurerm_spring_cloud_service.application.id
 
+  sso {
+    issuer_uri    = "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
+    scope         = ["openid,profile"]
+    # client_id     = azuread_application.gateway_app_registration.application_id
+    # client_secret = azuread_application_password.gateway_app_password.value
+  }
 
-  # sso {
-  #   issuer_uri = "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
-  #   scope      = ["openid"]
-  #   client_id = azuread_application.gateway_app_registration.application_id
-  #   client_secret = azuread_application_password.gateway_app_password.value
-  # }
+  api_metadata {
+    title       = "ACME Fitness"
+    description = "ACME Fitness API"
+    version     = "v.01"
+    # server_url  = 
+  }
 
   cors {
     allowed_origins = ["*"]

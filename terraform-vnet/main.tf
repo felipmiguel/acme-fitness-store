@@ -50,6 +50,14 @@ resource "azurerm_resource_group" "main" {
   }
 }
 
+module "application_insights" {
+  source           = "./modules/application_insights"
+  resource_group   = azurerm_resource_group.main.name
+  application_name = var.application_name
+  environment      = local.environment
+  location         = var.location
+}
+
 module "application" {
   source           = "./modules/spring-cloud"
   resource_group   = azurerm_resource_group.main.name
@@ -66,8 +74,12 @@ module "application" {
   service_subnet_id  = module.network.service_subnet_id
   cidr_ranges        = var.cidr_ranges
 
-  config_server_git_uri = var.config_server_git_uri
-  config_patterns       = var.config_patterns
+  config_server_git_uri                        = var.config_server_git_uri
+  config_patterns                              = var.config_patterns
+  azure_application_insights_connection_string = module.application_insights.azure_application_insights_connection_string
+  azure_application_insights_sample_rate       = var.azure_application_insights_sample_rate
+
+  app_owners = var.app_owners
 }
 
 module "database" {
@@ -108,6 +120,7 @@ module "network" {
   jumpbox_subnet_prefix    = var.jumpbox_subnet_prefix
   bastion_subnet_prefix    = var.bastion_subnet_prefix
   appgateway_subnet_prefix = var.appgateway_subnet_prefix
+  cosmos_subnet_prefix     = var.cosmos_subnet_prefix
 }
 
 module "jumpbox" {
@@ -117,11 +130,17 @@ module "jumpbox" {
   environment      = local.environment
   location         = var.location
 
-  vm_subnet_id       = module.network.jumpbox_subnet_id
-  bastion_subnet_id  = module.network.bastion_subnet_id
-  admin_password     = var.jumpbox_admin_password
-  aad_admin_username = var.aad_admin_username
-  enroll_with_mdm    = true
+  vm_subnet_id      = module.network.jumpbox_subnet_id
+  bastion_subnet_id = module.network.bastion_subnet_id
+  admin_password    = var.jumpbox_admin_password
+  enroll_with_mdm   = true
+}
+
+module "jumpbox_admins" {
+  count              = length(var.aad_admin_usernames)
+  source             = "./modules/jumpbox_admin"
+  aad_admin_username = var.aad_admin_usernames[count.index]
+  vm_id              = module.jumpbox.vm_id
 }
 
 module "appgateway" {
@@ -135,24 +154,32 @@ module "appgateway" {
 }
 
 module "cosmosdb" {
-  source           = "./modules/cosmosdb"
-  resource_group   = azurerm_resource_group.main.name
-  application_name = var.application_name
-  environment      = local.environment
-  location         = var.location
-
-  subnet_id = module.network.database_subnet_id
+  source             = "./modules/cosmosdb"
+  resource_group     = azurerm_resource_group.main.name
+  application_name   = var.application_name
+  environment        = local.environment
+  location           = var.location
+  virtual_network_id = module.network.virtual_network_id
+  subnet_id          = module.network.cosmos_subnet_id
 }
 
 // cart-service
 module "cart_service" {
-  source                   = "./modules/app"
-  resource_group           = azurerm_resource_group.main.name
-  application_name         = "cart-service"
-  runtime_version          = "Java_17"
-  spring_apps_service_name = module.application.spring_cloud_service_name
-  cloud_gateway_id         = module.application.cloud_gateway_id
-  gateway_routes           = jsondecode(file("../routes/cart-service.json"))
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "cart-service"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/cart-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = false
+  environment_variables = {
+    "AUTH_URL"               = module.application.spring_cloud_gateway_url
+    "CART_PORT"              = "8080"
+    "INSTRUMENTATION_KEY"    = module.application_insights.azure_application_insights_instrumentation_key
+    "REDIS_CONNECTIONSTRING" = module.redis.azure_redis_connection_string
+  }
 }
 
 # resource "azurerm_spring_cloud_connection" "cart_service" {
@@ -181,6 +208,8 @@ module "cart_service" {
 #   cloud_gateway_id         = module.application.cloud_gateway_id
 #   gateway_routes           = jsondecode(file("../routes/catalog-service.json"))
 #   assign_public_endpoint   = true
+# service_registry_bind    = true
+#   configuration_service_bind = true
 # }
 
 # resource "azurerm_spring_cloud_connection" "catalog_service" {
@@ -196,55 +225,98 @@ module "cart_service" {
 
 // frontend
 module "frontend" {
-  source                   = "./modules/app"
-  resource_group           = azurerm_resource_group.main.name
-  application_name         = "frontend"
-  runtime_version          = "Java_17"
-  spring_apps_service_name = module.application.spring_cloud_service_name
-  cloud_gateway_id         = module.application.cloud_gateway_id
-  gateway_routes           = jsondecode(file("../routes/frontend.json"))
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "frontend"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/frontend.json"))
+  service_registry_bind      = false
+  configuration_service_bind = false
+  environment_variables = {
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = "value"
+  }
 }
 // identity-service
 module "identity_service" {
-  source                   = "./modules/app"
-  resource_group           = azurerm_resource_group.main.name
-  application_name         = "identity-service"
-  runtime_version          = "Java_17"
-  spring_apps_service_name = module.application.spring_cloud_service_name
-  cloud_gateway_id         = module.application.cloud_gateway_id
-  gateway_routes           = jsondecode(file("../routes/identity-service.json"))
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "identity-service"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/identity-service.json"))
+  service_registry_bind      = true
+  configuration_service_bind = true
+  environment_variables = {
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.azure_application_insights_connection_string
+  }
+}
+
+locals {
+  order_routes = jsondecode(file("../routes/order-service.json"))
 }
 
 // order-service
 module "order_service" {
-  source                   = "./modules/app"
-  resource_group           = azurerm_resource_group.main.name
-  application_name         = "order-service"
-  runtime_version          = "dotnet"
-  spring_apps_service_name = module.application.spring_cloud_service_name
-  cloud_gateway_id         = module.application.cloud_gateway_id
-  gateway_routes           = jsondecode(file("../routes/order-service.json"))
-}
-
-resource "azurerm_spring_cloud_connection" "order_service" {
-  name = "order_service_db"
-  authentication {
-    type   = "secret"
-    name   = module.database.database_username
-    secret = module.database.database_password
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "order-service"
+  runtime_version            = "dotnet"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/order-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = false
+  environment_variables = {
+    "DatabaseProvider"                      = "Postgres"
+    "ConnectionStrings__OrderContext"       = "Server=${module.database.database_fqdn};Database=${module.database.database_name};Port=5432;Ssl Mode=Require;User Id=${module.database.database_username};Password=${module.database.database_password};}"
+    "ApplicationInsights__ConnectionString" = "InstrumentationKey=${module.application_insights.azure_application_insights_connection_string}"
+    "AcmeServiceSettings__AuthUrl"          = module.application.spring_cloud_gateway_url
   }
-
-  client_type        = "dotnet"
-  spring_cloud_id    = module.order_service.spring_cloud_id
-  target_resource_id = module.database.database_id
 }
+
+# resource "azurerm_spring_cloud_connection" "order_service" {
+#   name = "order_service_db"
+#   authentication {
+#     type   = "secret"
+#     name   = module.database.database_username
+#     secret = module.database.database_password
+#   }
+
+#   client_type        = "dotnet"
+#   spring_cloud_id    = module.order_service.spring_cloud_id
+#   target_resource_id = module.database.database_id
+# }
 
 // payment-service
 module "payment_service" {
-  source                   = "./modules/app"
-  resource_group           = azurerm_resource_group.main.name
-  application_name         = "payment-service"
-  runtime_version          = "java"
-  spring_apps_service_name = module.application.spring_cloud_service_name
-  cloud_gateway_id         = module.application.cloud_gateway_id
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "payment-service"
+  runtime_version            = "java"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  service_registry_bind      = true
+  configuration_service_bind = true
+}
+
+// catalog cosmos
+module "catalog_cosmos" {
+  source                        = "./modules/app"
+  resource_group                = azurerm_resource_group.main.name
+  application_name              = "catalog-service-cosmos"
+  runtime_version               = "java"
+  spring_apps_service_name      = module.application.spring_cloud_service_name
+  cloud_gateway_id              = module.application.cloud_gateway_id
+  assign_public_endpoint        = true
+  cosmos_account_id             = module.cosmosdb.azure_cosmosdb_account_id
+  cosmos_account_name           = module.cosmosdb.azure_cosmosdb_account_name
+  cosmos_database_id            = module.cosmosdb.azure_cosmosdb_database_id
+  cosmos_database_name          = module.cosmosdb.azure_cosmosdb_database_name
+  cosmos_endpoint               = module.cosmosdb.azure_cosmosdb_uri
+  cosmos_app_role_definition_id = module.cosmosdb.cosmos_app_role_definition_id
+  service_registry_bind         = false
+  configuration_service_bind    = true
 }

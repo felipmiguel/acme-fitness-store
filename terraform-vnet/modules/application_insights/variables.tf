@@ -21,20 +21,3 @@ variable "location" {
   description = "The Azure region where all resources in this example should be created"
   default     = ""
 }
-
-variable "throughput" {
-  type        = number
-  description = "The throughput of the MongoDB database (RU/s)"
-  default     = 400
-}
-
-variable "virtual_network_id" {
-  type        = string
-  description = "Virtual Network ID where Azure Cosmos DB will be deployed"
-  default     = ""  
-}
-
-variable "subnet_id" {
-  type = string
-  description = "The subnet from which the access is allowed"
-}

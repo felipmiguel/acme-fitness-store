@@ -18,3 +18,13 @@ output "database_id" {
   value       = azurerm_postgresql_flexible_server_database.database.id
   description = "The PostgreSQL server database id."
 }
+
+output "database_name" {
+  value       = azurerm_postgresql_flexible_server_database.database.name
+  description = "The PostgreSQL server database name."
+}
+
+output "database_fqdn" {
+  value       = azurerm_postgresql_flexible_server.database.fqdn
+  description = "The PostgreSQL server database host."
+}

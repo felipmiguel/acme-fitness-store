@@ -70,6 +70,12 @@ variable "appgateway_subnet_prefix" {
   default     = "10.11.7.0/24"
 }
 
+variable "cosmos_subnet_prefix" {
+  type        = string
+  description = "Cosmos DB subnet prefix"
+  default     = "10.11.8.0/24"
+}
+
 variable "cidr_ranges" {
   type        = list(string)
   description = "A list of (at least 3) CIDR ranges (at least /16) which are used to host the Azure Spring Apps infrastructure, which must not overlap with any existing CIDR ranges in the Subnet. Changing this forces a new resource to be created"
@@ -98,7 +104,18 @@ variable "jumpbox_admin_password" {
   sensitive = true
 }
 
-variable "aad_admin_username" {
-  type        = string
-  description = "The username for the administrator account of the virtual machine."
+variable "aad_admin_usernames" {
+  type        = list(string)
+  description = "The usernames for the administrators account of the virtual machine."
+}
+
+variable "app_owners"{
+  type        = list(string)
+  description = "The usernames for the owners of the application."
+}
+
+variable "azure_application_insights_sample_rate" {
+  type        = number
+  description = "The sample rate of the load test."
+  default     = 5
 }

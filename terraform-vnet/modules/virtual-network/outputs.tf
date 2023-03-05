@@ -42,3 +42,8 @@ output "appgateway_subnet_id" {
   value       = azurerm_subnet.appgateway_subnet.id
   description = "Application Gateway subnet"
 }
+
+output "cosmos_subnet_id" {
+  value       = azurerm_subnet.cosmos_subnet.id
+  description = "Azure Cosmos DB subnet"
+}

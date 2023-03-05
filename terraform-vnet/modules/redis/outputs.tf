@@ -13,3 +13,8 @@ output "azure_redis_password" {
   sensitive   = true
   description = "The Redis server password."
 }
+
+output "azure_redis_connection_string" {
+  value       = azurerm_redis_cache.redis.primary_connection_string
+  description = "The Redis server connection string."
+}

@@ -68,3 +68,8 @@ variable "appgateway_subnet_prefix" {
   type        = string
   description = "Application Gateway subnet prefix"
 }
+
+variable "cosmos_subnet_prefix" {
+  type        = string
+  description = "Cosmos DB subnet prefix"  
+}

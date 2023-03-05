@@ -37,10 +37,10 @@ variable "admin_password" {
   description = "The password for the administrator account of the virtual machine."
 }
 
-variable "aad_admin_username" {
-  type        = string
-  description = "The username for the administrator account of the virtual machine."
-}
+# variable "aad_admin_username" {
+#   type        = string
+#   description = "The username for the administrator account of the virtual machine."
+# }
 
 variable "enroll_with_mdm" {
   type        = bool
