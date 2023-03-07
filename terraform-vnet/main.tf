@@ -80,6 +80,11 @@ module "application" {
   azure_application_insights_sample_rate       = var.azure_application_insights_sample_rate
 
   app_owners = var.app_owners
+
+  cert_id         = module.keyvault.certificate_id
+  cert_name       = module.keyvault.certificate_name
+  cert_thumbprint = module.keyvault.certificate_thumbprint
+  dns_name        = var.dns_name
 }
 
 module "database" {
@@ -153,6 +158,7 @@ module "keyvault" {
 
   virtual_network_id = module.network.virtual_network_id
   subnet_id          = module.network.private_endpoints_subnet_id
+  dns_name           = var.dns_name
 }
 
 module "appgateway" {
@@ -162,10 +168,11 @@ module "appgateway" {
   environment      = local.environment
   location         = var.location
 
-  appgateway_subnet_id = module.network.appgateway_subnet_id
-  backend_fqdn         = module.application.spring_cloud_gateway_url
-  keyvault_id          = module.keyvault.kv_id
-  dns_name             = var.dns_name
+  appgateway_subnet_id  = module.network.appgateway_subnet_id
+  backend_fqdn          = module.application.spring_cloud_gateway_url
+  keyvault_id           = module.keyvault.kv_id
+  dns_name              = var.dns_name
+  certificate_secret_id = module.keyvault.certificate_secret_id
 }
 
 module "cosmosdb" {

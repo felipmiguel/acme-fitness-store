@@ -127,5 +127,5 @@ variable "azure_application_insights_sample_rate" {
 
 variable "dns_name" {
   type    = string
-  default = "sampleapp.randomval-java-openlab.com"
+  default = "acme-fitness.store"
 }
