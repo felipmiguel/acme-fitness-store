@@ -47,3 +47,8 @@ output "cosmos_subnet_id" {
   value       = azurerm_subnet.cosmos_subnet.id
   description = "Azure Cosmos DB subnet"
 }
+
+output "private_endpoints_subnet_id" {
+  value       = azurerm_subnet.private_endpoints_subnet.id
+  description = "Private endpoints subnet"
+}

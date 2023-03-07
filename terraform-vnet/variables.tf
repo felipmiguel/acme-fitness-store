@@ -76,6 +76,12 @@ variable "cosmos_subnet_prefix" {
   default     = "10.11.8.0/24"
 }
 
+variable "private_endpoints_subnet_prefix" {
+  type        = string
+  description = "Private endpoints subnet prefix"
+  default     = "10.11.9.0/24"
+}
+
 variable "cidr_ranges" {
   type        = list(string)
   description = "A list of (at least 3) CIDR ranges (at least /16) which are used to host the Azure Spring Apps infrastructure, which must not overlap with any existing CIDR ranges in the Subnet. Changing this forces a new resource to be created"
@@ -94,9 +100,8 @@ variable "config_patterns" {
   default = [
     "catalog/default",
     "catalog/key-vault",
-    "identity/default",
-    "identity/key-vault",
-  "payment/default"]
+    "identity",
+  "payment"]
 }
 
 variable "jumpbox_admin_password" {
@@ -109,7 +114,7 @@ variable "aad_admin_usernames" {
   description = "The usernames for the administrators account of the virtual machine."
 }
 
-variable "app_owners"{
+variable "app_owners" {
   type        = list(string)
   description = "The usernames for the owners of the application."
 }
@@ -118,4 +123,9 @@ variable "azure_application_insights_sample_rate" {
   type        = number
   description = "The sample rate of the load test."
   default     = 5
+}
+
+variable "dns_name" {
+  type    = string
+  default = "sampleapp.randomval-java-openlab.com"
 }

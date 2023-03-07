@@ -73,3 +73,8 @@ variable "cosmos_subnet_prefix" {
   type        = string
   description = "Cosmos DB subnet prefix"  
 }
+
+variable "private_endpoints_subnet_prefix" {
+  type        = string
+  description = "Private Endpoints subnet prefix"  
+}

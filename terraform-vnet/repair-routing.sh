@@ -145,7 +145,15 @@ function configure_defaults() {
 
 function configure_gateway() {
     az spring gateway update --assign-endpoint true
-    local gateway_url=$(az spring gateway show | jq -r '.properties.url')
+    az spring gateway show
+    local gateway_url=$(az spring gateway show --query 'properties.url' --output tsv)
+    AZURE_AD_APP_NAME="acme-shopping-gateway-${RANDOM}"
+    echo "Creating Azure AD app: ${AZURE_AD_APP_NAME}"
+    CLIENT_ID=$(az ad app create --display-name $AZURE_AD_APP_NAME --web-redirect-uris "https://${gateway_url}/login/oauth2/code/azure" "https://${gateway_url}/login/oauth2/code/sso" --output tsv --query appId)
+    echo "Created Azure AD app with ID: ${CLIENT_ID}"
+    CLIENT_SECRET=$(az ad app credential reset --id ${CLIENT_ID} --append --output tsv --query password)
+    echo "Created Azure AD app secret: ${CLIENT_SECRET}"
+    az ad sp create --id ${CLIENT_ID}
 
     echo "Configuring Spring Cloud Gateway"
     az spring gateway update \
@@ -171,12 +179,12 @@ function repair_all() {
 }
 
 function deploy_all() {
+    deploy_frontend_app &
     deploy_identity_service &
     deploy_cart_service &
     deploy_order_service &
     deploy_payment_service &
     deploy_catalog_service &
-    deploy_frontend_app &
     wait
 }
 
@@ -186,6 +194,8 @@ function retrieve_parameters() {
     POSTGRESQL_PASSWORD=$(terraform output -raw postgresql_password)
     POSTGRESQL_DATABASE=$(terraform output -raw postgresql_database)
     POSTGRESQL_CONNSTRING_DOTNET="Server=${POSTGRESQL_FQDN};Port=5432;Database=${POSTGRESQL_DATABASE};User Id=${POSTGRESQL_USERNAME};Password=${POSTGRESQL_PASSWORD};Ssl Mode=Require;"
+    
+    JWK_SET_URI=https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/discovery/v2.0/keys
 }
 
 function main() {
@@ -193,7 +203,7 @@ function main() {
     configure_defaults
     repair_all    
     configure_gateway
-    deploy_all
+    # deploy_all
 }
 
 main

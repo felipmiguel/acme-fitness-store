@@ -111,16 +111,17 @@ module "network" {
 
   service_endpoints = ["Microsoft.Sql", "Microsoft.KeyVault"]
 
-  address_space            = var.address_space
-  app_subnet_prefix        = var.app_subnet_prefix
-  service_subnet_prefix    = var.service_subnet_prefix
-  database_subnet_prefix   = var.database_subnet_prefix
-  redis_subnet_prefix      = var.redis_subnet_prefix
-  loadtests_subnet_prefix  = var.loadtests_subnet_prefix
-  jumpbox_subnet_prefix    = var.jumpbox_subnet_prefix
-  bastion_subnet_prefix    = var.bastion_subnet_prefix
-  appgateway_subnet_prefix = var.appgateway_subnet_prefix
-  cosmos_subnet_prefix     = var.cosmos_subnet_prefix
+  address_space                   = var.address_space
+  app_subnet_prefix               = var.app_subnet_prefix
+  service_subnet_prefix           = var.service_subnet_prefix
+  database_subnet_prefix          = var.database_subnet_prefix
+  redis_subnet_prefix             = var.redis_subnet_prefix
+  loadtests_subnet_prefix         = var.loadtests_subnet_prefix
+  jumpbox_subnet_prefix           = var.jumpbox_subnet_prefix
+  bastion_subnet_prefix           = var.bastion_subnet_prefix
+  appgateway_subnet_prefix        = var.appgateway_subnet_prefix
+  cosmos_subnet_prefix            = var.cosmos_subnet_prefix
+  private_endpoints_subnet_prefix = var.private_endpoints_subnet_prefix
 }
 
 module "jumpbox" {
@@ -143,6 +144,17 @@ module "jumpbox_admins" {
   vm_id              = module.jumpbox.vm_id
 }
 
+module "keyvault" {
+  source           = "./modules/keyvault"
+  resource_group   = azurerm_resource_group.main.name
+  application_name = var.application_name
+  environment      = local.environment
+  location         = var.location
+
+  virtual_network_id = module.network.virtual_network_id
+  subnet_id          = module.network.private_endpoints_subnet_id
+}
+
 module "appgateway" {
   source           = "./modules/application_gateway"
   resource_group   = azurerm_resource_group.main.name
@@ -151,6 +163,9 @@ module "appgateway" {
   location         = var.location
 
   appgateway_subnet_id = module.network.appgateway_subnet_id
+  backend_fqdn         = module.application.spring_cloud_gateway_url
+  keyvault_id          = module.keyvault.kv_id
+  dns_name             = var.dns_name
 }
 
 module "cosmosdb" {

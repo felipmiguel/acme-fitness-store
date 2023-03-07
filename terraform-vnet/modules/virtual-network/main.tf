@@ -148,3 +148,17 @@ resource "azurerm_subnet" "cosmos_subnet" {
   address_prefixes     = [var.cosmos_subnet_prefix]
   service_endpoints    = ["Microsoft.AzureCosmosDB"]
 }
+
+resource "azurecaf_name" "private_endpoints_subnet" {
+  name          = var.application_name
+  resource_type = "azurerm_subnet"
+  suffixes      = [var.environment, "pe"]
+}
+
+resource "azurerm_subnet" "private_endpoints_subnet" {
+  name                                      = azurecaf_name.private_endpoints_subnet.result
+  resource_group_name                       = var.resource_group
+  virtual_network_name                      = azurerm_virtual_network.virtual_network.name
+  address_prefixes                          = [var.private_endpoints_subnet_prefix]
+  private_endpoint_network_policies_enabled = true
+}
