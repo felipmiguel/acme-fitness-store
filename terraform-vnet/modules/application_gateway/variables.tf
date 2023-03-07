@@ -38,3 +38,7 @@ variable "keyvault_id" {
 variable "dns_name" {
   type = string
 }
+
+variable "certificate_secret_id" {
+  type = string  
+}

@@ -21,58 +21,7 @@ resource "azurerm_public_ip" "app_gw_public_ip" {
   sku                 = "Standard"
 }
 
-resource "azurerm_key_vault_certificate" "self_signed_cert" {
-  name         = "self-${var.application_name}-gw-cert"
-  key_vault_id = var.keyvault_id
 
-  certificate_policy {
-    issuer_parameters {
-      name = "Self"
-    }
-
-    key_properties {
-      exportable = true
-      key_size   = 2048
-      key_type   = "RSA"
-      reuse_key  = true
-    }
-
-    lifetime_action {
-      action {
-        action_type = "AutoRenew"
-      }
-
-      trigger {
-        days_before_expiry = 30
-      }
-    }
-
-    secret_properties {
-      content_type = "application/x-pkcs12"
-    }
-
-    x509_certificate_properties {
-      # Server Authentication = 1.3.6.1.5.5.7.3.1
-      # Client Authentication = 1.3.6.1.5.5.7.3.2
-      extended_key_usage = ["1.3.6.1.5.5.7.3.1"]
-
-      key_usage = [
-        "cRLSign",
-        "dataEncipherment",
-        "digitalSignature",
-        "keyAgreement",
-        "keyCertSign",
-        "keyEncipherment",
-      ]
-      subject_alternative_names {
-        dns_names = [var.backend_fqdn]
-      }
-
-      subject            = "C=US, ST=WA, L=Redmond, O=Contoso, OU=Contoso HR, CN=${var.dns_name}"
-      validity_in_months = 12
-    }
-  }
-}
 
 locals {
   backend_address_pool_name      = "${var.application_name}-beap"
@@ -138,16 +87,16 @@ resource "azurerm_application_gateway" "app_gateway" {
     port                                = 443
     protocol                            = "Https"
     request_timeout                     = 60
-    pick_host_name_from_backend_address = true
-    # trusted_root_certificate_names      = [local.rootcert_name]
+    pick_host_name_from_backend_address = false
+    trusted_root_certificate_names      = [local.rootcert_name]
     probe_name                          = local.probe_name
   }
 
   probe {
     interval = 30
     name     = local.probe_name
-    # host                = var.dns_name
-    pick_host_name_from_backend_http_settings = true
+    host                = var.dns_name
+    pick_host_name_from_backend_http_settings = false
     protocol                                  = "Https"
     path                                      = "/"
     timeout                                   = 30
@@ -199,12 +148,12 @@ resource "azurerm_application_gateway" "app_gateway" {
 
   trusted_root_certificate {
     name                = local.rootcert_name
-    key_vault_secret_id = azurerm_key_vault_certificate.self_signed_cert.secret_id
+    key_vault_secret_id = var.certificate_secret_id
   }
 
   ssl_certificate {
     name                = local.cert_name
-    key_vault_secret_id = azurerm_key_vault_certificate.self_signed_cert.secret_id
+    key_vault_secret_id = var.certificate_secret_id
   }
 
   # waf_configuration {

@@ -27,3 +27,7 @@ variable "subnet_id" {
 variable "virtual_network_id" {
   type = string
 }
+
+variable "dns_name" {
+  type = string
+}

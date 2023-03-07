@@ -24,6 +24,26 @@ variable "database_url" {
   description = "The URL to the database"
 }
 
+variable "cert_id" {
+  type        = string
+  description = "The ID of the certificate"
+}
+
+variable "cert_name" {
+  type        = string
+  description = "The name of the certificate"
+}
+
+variable "cert_thumbprint" {
+  type        = string
+  description = "The thumbprint of the certificate"  
+}
+
+variable "dns_name" {
+  type = string
+}
+
+
 # variable "vault_id" {
 #   type        = string
 #   description = "The Azure Key Vault ID"
@@ -82,5 +102,5 @@ variable "azure_application_insights_sample_rate" {
 
 variable "app_owners" {
   type        = list(string)
-  description = "A list of owners for the application"  
+  description = "A list of owners for the application"
 }

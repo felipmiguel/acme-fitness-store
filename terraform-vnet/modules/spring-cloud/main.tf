@@ -99,44 +99,57 @@ resource "azurerm_spring_cloud_dev_tool_portal" "dev_tool_portal" {
 }
 
 data "azuread_user" "app_owners" {
-  count = length(var.app_owners)
+  count               = length(var.app_owners)
   user_principal_name = var.app_owners[count.index]
 }
 
 resource "azuread_application" "gateway_app_registration" {
   display_name = local.azure_ad_application_name
-  owners = data.azuread_user.app_owners.*.object_id
-  # web {
-  #   redirect_uris = [azurerm_spring_cloud_gateway.spring_gateway.url]
-  # }
+  owners       = data.azuread_user.app_owners.*.object_id
+  web {
+    redirect_uris = [
+      "https://${var.dns_name}/login/oauth2/code/azure",
+      "https://${var.dns_name}/login/oauth2/code/sso"
+    ]
+  }
 }
 
-# resource "azuread_application_password" "gateway_app_password" {
-#   application_object_id = azuread_application.gateway_app_registration.object_id
-# }
+resource "azuread_application_password" "gateway_app_password" {
+  application_object_id = azuread_application.gateway_app_registration.object_id
+}
 
 resource "azurerm_spring_cloud_gateway" "spring_gateway" {
   name                          = "default"
   public_network_access_enabled = true
   spring_cloud_service_id       = azurerm_spring_cloud_service.application.id
+  https_only                    = true
 
   sso {
     issuer_uri    = "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
     scope         = ["openid,profile"]
-    # client_id     = azuread_application.gateway_app_registration.application_id
-    # client_secret = azuread_application_password.gateway_app_password.value
+    client_id     = azuread_application.gateway_app_registration.application_id
+    client_secret = azuread_application_password.gateway_app_password.value
   }
+
+
 
   api_metadata {
     title       = "ACME Fitness"
     description = "ACME Fitness API"
     version     = "v.01"
-    # server_url  = 
+    server_url  = "https://${var.dns_name}"
+
   }
 
   cors {
     allowed_origins = ["*"]
   }
+}
+
+resource "azurerm_spring_cloud_gateway_custom_domain" "gateway_domain" {
+  spring_cloud_gateway_id = azurerm_spring_cloud_gateway.spring_gateway.id
+  name                    = var.dns_name
+  thumbprint              = var.cert_thumbprint
 }
 
 
@@ -170,6 +183,13 @@ resource "azurerm_private_dns_a_record" "internal_lb_record" {
   resource_group_name = var.resource_group
   ttl                 = 300
   records             = [data.azurerm_lb.asc_internal_lb.private_ip_address]
+}
+
+resource "azurerm_spring_cloud_certificate" "asa_cert" {
+  name                     = var.cert_name
+  resource_group_name      = var.resource_group
+  service_name             = azurerm_spring_cloud_service.application.name
+  key_vault_certificate_id = var.cert_id
 }
 
 # # This creates the application definition
