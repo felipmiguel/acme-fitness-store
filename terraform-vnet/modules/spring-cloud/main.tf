@@ -149,7 +149,7 @@ resource "azurerm_spring_cloud_gateway" "spring_gateway" {
 resource "azurerm_spring_cloud_gateway_custom_domain" "gateway_domain" {
   spring_cloud_gateway_id = azurerm_spring_cloud_gateway.spring_gateway.id
   name                    = var.dns_name
-  thumbprint              = var.cert_thumbprint
+  thumbprint              = azurerm_spring_cloud_certificate.asa_cert.thumbprint
 }
 
 
