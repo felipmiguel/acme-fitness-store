@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.36.0"
+      version = "3.47"
     }
     azurecaf = {
       source  = "aztfmod/azurecaf"
@@ -324,6 +324,10 @@ module "payment_service" {
   configuration_service_bind = true
 }
 
+locals {
+  cosmosdb_scope ="${module.cosmosdb.azure_cosmosdb_account_id}/dbs/${module.cosmosdb.azure_cosmosdb_database_name}"
+}
+
 // catalog cosmos
 module "catalog_cosmos" {
   source                        = "./modules/app"
@@ -335,10 +339,10 @@ module "catalog_cosmos" {
   assign_public_endpoint        = true
   cosmos_account_id             = module.cosmosdb.azure_cosmosdb_account_id
   cosmos_account_name           = module.cosmosdb.azure_cosmosdb_account_name
-  cosmos_database_id            = module.cosmosdb.azure_cosmosdb_database_id
+  cosmos_database_scope            =  local.cosmosdb_scope
   cosmos_database_name          = module.cosmosdb.azure_cosmosdb_database_name
   cosmos_endpoint               = module.cosmosdb.azure_cosmosdb_uri
   cosmos_app_role_definition_id = module.cosmosdb.cosmos_app_role_definition_id
-  service_registry_bind         = false
+  service_registry_bind         = true
   configuration_service_bind    = true
 }

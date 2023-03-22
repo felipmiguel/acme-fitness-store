@@ -61,9 +61,9 @@ variable "cosmos_database_name" {
   default     = null
 }
 
-variable "cosmos_database_id" {
+variable "cosmos_database_scope" {
   type        = string
-  description = "The ID of the Cosmos DB database"
+  description = "The scope of the Cosmos DB database for role assignment"
   default     = null
 }
 
@@ -95,4 +95,10 @@ variable "environment_variables" {
   type        = map(string)
   description = "The environment variables"
   default     = {}
+}
+
+variable "build_result_id" {
+  type        = string
+  description = "The ID of the build to deploy"
+  default     = "<default>"
 }

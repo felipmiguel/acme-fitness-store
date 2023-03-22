@@ -35,7 +35,7 @@ resource "azurerm_spring_cloud_build_deployment" "application_deployment" {
   name                = "default"
   spring_cloud_app_id = azurerm_spring_cloud_app.application.id
   instance_count      = 1
-  build_result_id     = "<default>"
+  build_result_id     = var.build_result_id
 
   quota {
     cpu    = "1"
@@ -49,19 +49,19 @@ resource "azurerm_spring_cloud_active_deployment" "active_deployment" {
   spring_cloud_app_id = azurerm_spring_cloud_app.application.id
 }
 
-# resource "random_uuid" "role_uuid" {
+resource "random_uuid" "role_uuid" {
 
-# }
+}
 
-# resource "azurerm_cosmosdb_sql_role_assignment" "app_role" {
-#   count               = var.cosmos_database_name != null ? 1 : 0
-#   name                = random_uuid.role_uuid.result
-#   resource_group_name = var.resource_group
-#   account_name        = var.cosmos_account_name
-#   scope               = "/"
-#   role_definition_id  = var.cosmos_app_role_definition_id
-#   principal_id        = azurerm_spring_cloud_app.application.identity[0].principal_id
-# }
+resource "azurerm_cosmosdb_sql_role_assignment" "app_role" {
+  count               = var.cosmos_database_name != null ? 1 : 0
+  name                = random_uuid.role_uuid.result
+  resource_group_name = var.resource_group
+  account_name        = var.cosmos_account_name
+  scope               = var.cosmos_database_scope
+  role_definition_id  = var.cosmos_app_role_definition_id
+  principal_id        = azurerm_spring_cloud_app.application.identity[0].principal_id
+}
 
 # resource "azapi_resource" "gateway_route"{
 #   count = length(var.gateway_routes) > 0 ? 1 : 0
