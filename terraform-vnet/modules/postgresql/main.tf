@@ -27,10 +27,10 @@ resource "azurerm_postgresql_flexible_server" "database" {
   administrator_login    = var.administrator_login
   administrator_password = random_password.password.result
 
-  sku_name                     = "GP_Standard_D2ds_v4"
+  sku_name                     = "GP_Standard_D16ds_v4"
   storage_mb                   = 32768
   backup_retention_days        = 7
-  version                      = "13"
+  version                      = "14"
   geo_redundant_backup_enabled = true
   high_availability {
     mode                      = "ZoneRedundant"
