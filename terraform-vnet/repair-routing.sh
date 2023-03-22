@@ -16,6 +16,7 @@ readonly IDENTITY_SERVICE="identity-service"
 readonly ORDER_SERVICE="order-service"
 readonly PAYMENT_SERVICE="payment-service"
 readonly CATALOG_SERVICE="catalog-service"
+readonly CATALOG_SERVICE_COSMOS="catalog-service-cosmos"
 readonly FRONTEND_APP="frontend"
 readonly CUSTOM_BUILDER="no-bindings-builder"
 
@@ -118,6 +119,16 @@ function deploy_catalog_service() {
         --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
 }
 
+function deploy_catalog_service_cosmos() {
+    echo "Deploying catalog-service-cosmos application"
+
+    az spring app deploy --name $CATALOG_SERVICE_COSMOS \
+        --config-file-pattern catalog/default \
+        --source-path "$APPS_ROOT/acme-catalog-cosmos" \
+        --build-env BP_JVM_VERSION=17.*
+}
+
+
 function deploy_payment_service() {
     echo "Deploying payment-service application"
 
@@ -185,6 +196,7 @@ function deploy_all() {
     deploy_order_service &
     deploy_payment_service &
     deploy_catalog_service &
+    deploy_catalog_service_cosmos &
     wait
 }
 
@@ -194,7 +206,9 @@ function retrieve_parameters() {
     POSTGRESQL_PASSWORD=$(terraform output -raw postgresql_password)
     POSTGRESQL_DATABASE=$(terraform output -raw postgresql_database)
     POSTGRESQL_CONNSTRING_DOTNET="Server=${POSTGRESQL_FQDN};Port=5432;Database=${POSTGRESQL_DATABASE};User Id=${POSTGRESQL_USERNAME};Password=${POSTGRESQL_PASSWORD};Ssl Mode=Require;"
-    
+    CLIENT_ID="a17c67e2-d50f-4bbc-a2b7-a32d5cbb9641"
+    CLIENT_SECRET="eOR8Q~Z5t_jOYxSyAXc~4s4qYA1ZHmn8HRC-DaIa"
+    ISSUER_URI="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
     JWK_SET_URI=https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/discovery/v2.0/keys
 }
 
@@ -203,7 +217,7 @@ function main() {
     configure_defaults
     repair_all    
     configure_gateway
-    # deploy_all
+    deploy_all
 }
 
 main
