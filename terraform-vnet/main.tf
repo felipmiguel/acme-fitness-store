@@ -197,11 +197,15 @@ module "cart_service" {
   service_registry_bind      = false
   configuration_service_bind = false
   environment_variables = {
-    "AUTH_URL"               = module.application.spring_cloud_gateway_url
-    "CART_PORT"              = "8080"
-    "INSTRUMENTATION_KEY"    = module.application_insights.azure_application_insights_instrumentation_key
-    "REDIS_CONNECTIONSTRING" = module.redis.azure_redis_connection_string
+    "AUTH_URL"            = "https://${module.application.spring_cloud_gateway_url}"
+    "CART_PORT"           = "8080"
+    "INSTRUMENTATION_KEY" = module.application_insights.azure_application_insights_connection_string
+    "REDIS_HOST"          = module.redis.azure_redis_host
+    "REDIS_PORT"          = "6380"
+    "REDIS_PASSWORD"      = module.redis.azure_redis_password
+    # "REDIS_CONNECTIONSTRING" = "redis://${module.redis.azure_redis_host}:6380,password=${module.redis.azure_redis_password},ssl=True,abortConnect=False"
   }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/cart-service-default/results/20"
 }
 
 # resource "azurerm_spring_cloud_connection" "cart_service" {
@@ -257,9 +261,13 @@ module "frontend" {
   service_registry_bind      = false
   configuration_service_bind = false
   environment_variables = {
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = "value"
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.azure_application_insights_connection_string
   }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/frontend-default/results/22"
 }
+
+data "azurerm_client_config" "current" {}
+
 // identity-service
 module "identity_service" {
   source                     = "./modules/app"
@@ -273,7 +281,9 @@ module "identity_service" {
   configuration_service_bind = true
   environment_variables = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.azure_application_insights_connection_string
+    "JWK_URI"                               = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/discovery/v2.0/keys"
   }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/identity-service-default/results/21"
 }
 
 locals {
@@ -289,14 +299,15 @@ module "order_service" {
   spring_apps_service_name   = module.application.spring_cloud_service_name
   cloud_gateway_id           = module.application.cloud_gateway_id
   gateway_routes             = jsondecode(file("../routes/order-service.json"))
-  service_registry_bind      = false
+  service_registry_bind      = true
   configuration_service_bind = false
   environment_variables = {
     "DatabaseProvider"                      = "Postgres"
-    "ConnectionStrings__OrderContext"       = "Server=${module.database.database_fqdn};Database=${module.database.database_name};Port=5432;Ssl Mode=Require;User Id=${module.database.database_username};Password=${module.database.database_password};}"
-    "ApplicationInsights__ConnectionString" = "InstrumentationKey=${module.application_insights.azure_application_insights_connection_string}"
-    "AcmeServiceSettings__AuthUrl"          = module.application.spring_cloud_gateway_url
+    "ConnectionStrings__OrderContext"       = "Server=${module.database.database_fqdn};Database=${module.database.database_name};Port=5432;Ssl Mode=Require;User Id=${module.database.database_username};Password=${module.database.database_password};"
+    "ApplicationInsights__ConnectionString" = module.application_insights.azure_application_insights_connection_string
+    "AcmeServiceSettings__AuthUrl"          = "https://${module.application.spring_cloud_gateway_url}"
   }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/order-service-default/results/1"
 }
 
 # resource "azurerm_spring_cloud_connection" "order_service" {
@@ -322,10 +333,11 @@ module "payment_service" {
   cloud_gateway_id           = module.application.cloud_gateway_id
   service_registry_bind      = true
   configuration_service_bind = true
+  build_result_id            = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/payment-service-default/results/23"
 }
 
 locals {
-  cosmosdb_scope ="${module.cosmosdb.azure_cosmosdb_account_id}/dbs/${module.cosmosdb.azure_cosmosdb_database_name}"
+  cosmosdb_scope = "${module.cosmosdb.azure_cosmosdb_account_id}/dbs/${module.cosmosdb.azure_cosmosdb_database_name}"
 }
 
 // catalog cosmos
@@ -339,10 +351,32 @@ module "catalog_cosmos" {
   assign_public_endpoint        = true
   cosmos_account_id             = module.cosmosdb.azure_cosmosdb_account_id
   cosmos_account_name           = module.cosmosdb.azure_cosmosdb_account_name
-  cosmos_database_scope            =  local.cosmosdb_scope
+  cosmos_database_scope         = local.cosmosdb_scope
   cosmos_database_name          = module.cosmosdb.azure_cosmosdb_database_name
   cosmos_endpoint               = module.cosmosdb.azure_cosmosdb_uri
   cosmos_app_role_definition_id = module.cosmosdb.cosmos_app_role_definition_id
   service_registry_bind         = true
   configuration_service_bind    = true
+  build_result_id               = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-cosmos-default/results/9"
+}
+
+
+// catalog cosmos
+module "catalog_cosmos_2" {
+  source                        = "./modules/app"
+  resource_group                = azurerm_resource_group.main.name
+  application_name              = "catalog-service-cosmos2"
+  runtime_version               = "java"
+  spring_apps_service_name      = module.application.spring_cloud_service_name
+  cloud_gateway_id              = module.application.cloud_gateway_id
+  assign_public_endpoint        = true
+  cosmos_account_id             = module.cosmosdb.azure_cosmosdb_account_id
+  cosmos_account_name           = module.cosmosdb.azure_cosmosdb_account_name
+  cosmos_database_scope         = local.cosmosdb_scope
+  cosmos_database_name          = module.cosmosdb.azure_cosmosdb_database_name
+  cosmos_endpoint               = module.cosmosdb.azure_cosmosdb_uri
+  cosmos_app_role_definition_id = module.cosmosdb.cosmos_app_role_definition_id
+  service_registry_bind         = true
+  configuration_service_bind    = true
+  build_result_id               = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-cosmos2-default/results/1"
 }

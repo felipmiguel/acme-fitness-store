@@ -126,7 +126,7 @@ resource "azurerm_spring_cloud_gateway" "spring_gateway" {
 
   sso {
     issuer_uri    = "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
-    scope         = ["openid,profile"]
+    scope         = ["openid", "profile"]
     client_id     = azuread_application.gateway_app_registration.application_id
     client_secret = azuread_application_password.gateway_app_password.value
   }

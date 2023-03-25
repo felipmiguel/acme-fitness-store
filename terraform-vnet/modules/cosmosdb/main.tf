@@ -115,3 +115,11 @@ resource "azurerm_cosmosdb_sql_database" "cosmosdb" {
     max_throughput = 1000000
   }
 }
+
+resource "azurerm_cosmosdb_sql_container" "products_container" {
+  account_name        = azurerm_cosmosdb_account.cosmosdb.name
+  database_name       = azurerm_cosmosdb_sql_database.cosmosdb.name
+  resource_group_name = azurerm_cosmosdb_sql_database.cosmosdb.resource_group_name
+  name                = "products"
+  partition_key_path  = "/id"
+}

@@ -7,7 +7,6 @@ readonly CART_SERVICE_REDIS_CONNECTION="cart_service_cache"
 readonly CATALOG_SERVICE_DB_CONNECTION="catalog_service_db"
 readonly ACMEFIT_CATALOG_DB_NAME="psqlfdb-fitness-store-prod-vnet-dev"
 readonly ACMEFIT_ORDER_DB_NAME="acmefit_order"
-readonly ACMEFIT_POSTGRES_DB_PASSWORD="Acm3F!tness"
 readonly ACMEFIT_POSTGRES_DB_USER=dbadmin
 readonly ACMEFIT_POSTGRES_SERVER="psqlf-fitness-store-prod-vnet-dev"
 readonly ORDER_DB_NAME="orders"
@@ -17,6 +16,7 @@ readonly ORDER_SERVICE="order-service"
 readonly PAYMENT_SERVICE="payment-service"
 readonly CATALOG_SERVICE="catalog-service"
 readonly CATALOG_SERVICE_COSMOS="catalog-service-cosmos"
+readonly CATALOG_SERVICE_COSMOS2="catalog-service-cosmos2"
 readonly FRONTEND_APP="frontend"
 readonly CUSTOM_BUILDER="no-bindings-builder"
 
@@ -51,10 +51,17 @@ function repair_order_service() {
 }
 
 function repair_catalog_service() {
-    echo "Creating catalog service"
+    echo "Repairing catalog service"
     az spring application-configuration-service bind --app $CATALOG_SERVICE
     az spring service-registry bind --app $CATALOG_SERVICE
     az spring gateway route-config update --name $CATALOG_SERVICE --app-name $CATALOG_SERVICE --routes-file "$PROJECT_ROOT/azure/routes/catalog-service.json"
+}
+
+
+function repair_catalog_cosmos_service() {
+    echo "Repairing catalog cosmos service"
+    az spring application-configuration-service bind --app $CATALOG_SERVICE_COSMOS
+    az spring service-registry bind --app $CATALOG_SERVICE_COSMOS
 }
 
 function repair_payment_service() {
@@ -128,6 +135,14 @@ function deploy_catalog_service_cosmos() {
         --build-env BP_JVM_VERSION=17.*
 }
 
+function deploy_catalog_service_cosmos2() {
+    echo "Deploying catalog-service-cosmos application"
+
+    az spring app deploy --name $CATALOG_SERVICE_COSMOS2 \
+        --config-file-pattern catalog/default \
+        --source-path "$APPS_ROOT/acme-catalog-cosmos" \
+        --build-env BP_JVM_VERSION=17.*
+}
 
 function deploy_payment_service() {
     echo "Deploying payment-service application"
@@ -185,6 +200,7 @@ function repair_all() {
     repair_order_service &
     repair_payment_service &
     repair_catalog_service &
+    repair_catalog_cosmos_service &
     repair_frontend_app &
     wait
 }
@@ -197,6 +213,7 @@ function deploy_all() {
     deploy_payment_service &
     deploy_catalog_service &
     deploy_catalog_service_cosmos &
+    deploy_catalog_service_cosmos2 &
     wait
 }
 
@@ -206,8 +223,7 @@ function retrieve_parameters() {
     POSTGRESQL_PASSWORD=$(terraform output -raw postgresql_password)
     POSTGRESQL_DATABASE=$(terraform output -raw postgresql_database)
     POSTGRESQL_CONNSTRING_DOTNET="Server=${POSTGRESQL_FQDN};Port=5432;Database=${POSTGRESQL_DATABASE};User Id=${POSTGRESQL_USERNAME};Password=${POSTGRESQL_PASSWORD};Ssl Mode=Require;"
-    CLIENT_ID="a17c67e2-d50f-4bbc-a2b7-a32d5cbb9641"
-    CLIENT_SECRET="eOR8Q~Z5t_jOYxSyAXc~4s4qYA1ZHmn8HRC-DaIa"
+    
     ISSUER_URI="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"
     JWK_SET_URI=https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/discovery/v2.0/keys
 }

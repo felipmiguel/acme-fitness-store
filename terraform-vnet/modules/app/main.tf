@@ -91,7 +91,7 @@ resource "azurerm_spring_cloud_gateway_route_config" "gateway_route" {
   dynamic "route" {
     for_each = var.gateway_routes
     content {
-      order                  = var.gateway_routes[route.key].order == null ? index(var.gateway_routes, var.gateway_routes[route.key]) : var.gateway_routes[route.key].order
+      order                  = var.gateway_routes[route.key].order == null ? 0 : var.gateway_routes[route.key].order
       filters                = var.gateway_routes[route.key].filters
       classification_tags    = var.gateway_routes[route.key].tags
       predicates             = var.gateway_routes[route.key].predicates

@@ -19,7 +19,7 @@ output "azure_cosmosdb_database_name" {
 }
 
 output "azure_cosmosdb_uri" {
-  value       = azurerm_cosmosdb_account.cosmosdb.connection_strings[0]
+  value       = azurerm_cosmosdb_account.cosmosdb.endpoint
   description = "The Cosmos DB connection string."
 }
 

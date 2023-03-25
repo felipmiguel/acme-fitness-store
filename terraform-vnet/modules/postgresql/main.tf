@@ -51,6 +51,14 @@ resource "azurerm_postgresql_flexible_server" "database" {
     password_auth_enabled         = true
     tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
+
+  #uuid-ossp
+}
+
+resource "azurerm_postgresql_flexible_server_configuration" "uuid_extension" {
+  server_id = azurerm_postgresql_flexible_server.database.id
+  name      = "azure.extensions"
+  value     = "uuid-ossp"
 }
 
 resource "azurecaf_name" "postgresql_database" {
