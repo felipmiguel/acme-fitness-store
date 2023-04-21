@@ -49,7 +49,7 @@ variable "redis_subnet_prefix" {
 variable "loadtests_subnet_prefix" {
   type        = string
   description = "Load tests subnet prefix"
-  default     = "10.11.4.0/24"
+  default     = "10.11.12.0/22"
 }
 
 variable "jumpbox_subnet_prefix" {
@@ -80,6 +80,13 @@ variable "private_endpoints_subnet_prefix" {
   type        = string
   description = "Private endpoints subnet prefix"
   default     = "10.11.9.0/24"
+}
+
+
+variable "aks_subnet_prefix" {
+  type        = string
+  description = "Load tests subnet prefix"
+  default     = "10.11.16.0/20"
 }
 
 variable "cidr_ranges" {
@@ -125,7 +132,12 @@ variable "azure_application_insights_sample_rate" {
   default     = 5
 }
 
+# variable "dns_name" {
+#   type    = string
+#   default = "acme-fitness.store"
+# }
+
 variable "dns_name" {
   type    = string
-  default = "acme-fitness.store"
+  default = "secure-gateway.spring-microservices.com"  
 }

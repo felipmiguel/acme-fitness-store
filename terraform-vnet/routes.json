@@ -1,0 +1,267 @@
+[
+  {
+    "name": "cart-service",
+    "provisioningState": "Succeeded",
+    "routes": [
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/cart/item/add/{userId}",
+          "Method=POST"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "cart"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/cart/item/modify/{userId}",
+          "Method=POST"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "cart"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/cart/items/{userId}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "cart"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/cart/clear/{userId}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "cart"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/cart/total/{userId}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "cart"
+        ]
+      }
+    ],
+    "appName": "cart-service",
+    "protocol": "HTTP"
+  },
+  {
+    "name": "catalog-service",
+    "provisioningState": "Succeeded",
+    "routes": [
+      {
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/products",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "catalog"
+        ]
+      },
+      {
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/products/{id}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "catalog"
+        ]
+      },
+      {
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/catalogliveness",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0",
+          "SetPath=/actuator/health/liveness"
+        ],
+        "tags": [
+          "catalog"
+        ]
+      },
+      {
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/static/images/{id}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "catalog"
+        ]
+      }
+    ],
+    "appName": "catalog-service",
+    "protocol": "HTTP"
+  },
+  {
+    "name": "frontend",
+    "provisioningState": "Succeeded",
+    "routes": [
+      {
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/**",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "order": 1000,
+        "tags": [
+          "frontend"
+        ]
+      }
+    ],
+    "appName": "frontend",
+    "protocol": "HTTP"
+  },
+  {
+    "name": "identity-service",
+    "provisioningState": "Succeeded",
+    "routes": [
+      {
+        "ssoEnabled": true,
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/acme-login",
+          "Method=GET"
+        ],
+        "filters": [
+          "RedirectTo=302, /"
+        ],
+        "order": 0,
+        "tags": [
+          "sso"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/userinfo",
+          "Method=GET"
+        ],
+        "filters": [
+          "RedirectTo=302, /whoami",
+          "SetResponseHeader=Cache-Control, no-store"
+        ],
+        "tags": [
+          "users"
+        ]
+      },
+      {
+        "uri": "no://op",
+        "ssoEnabled": true,
+        "tokenRelay": false,
+        "predicates": [
+          "Path=/verify-token",
+          "Method=POST"
+        ],
+        "tags": [
+          "users"
+        ]
+      },
+      {
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/whoami",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    ],
+    "appName": "identity-service",
+    "protocol": "HTTP"
+  },
+  {
+    "name": "order-service",
+    "provisioningState": "Succeeded",
+    "routes": [
+      {
+        "title": "Create an order.",
+        "description": "Creates an order for the user.",
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/order/add/{userId}",
+          "Method=POST"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "order"
+        ]
+      },
+      {
+        "title": "Retrieve User's Orders.",
+        "description": "Lookup all orders for the given user",
+        "ssoEnabled": true,
+        "tokenRelay": true,
+        "predicates": [
+          "Path=/order/{userId}",
+          "Method=GET"
+        ],
+        "filters": [
+          "StripPrefix=0"
+        ],
+        "tags": [
+          "order"
+        ]
+      }
+    ],
+    "appName": "order-service",
+    "protocol": "HTTP"
+  }
+]

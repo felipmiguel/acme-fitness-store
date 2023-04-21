@@ -127,6 +127,7 @@ module "network" {
   appgateway_subnet_prefix        = var.appgateway_subnet_prefix
   cosmos_subnet_prefix            = var.cosmos_subnet_prefix
   private_endpoints_subnet_prefix = var.private_endpoints_subnet_prefix
+  aks_subnet_prefix               = var.aks_subnet_prefix
 }
 
 module "jumpbox" {

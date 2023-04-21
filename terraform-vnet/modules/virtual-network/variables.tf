@@ -78,3 +78,9 @@ variable "private_endpoints_subnet_prefix" {
   type        = string
   description = "Private Endpoints subnet prefix"  
 }
+
+
+variable "aks_subnet_prefix" {
+  type        = string
+  description = "Private Endpoints subnet prefix"  
+}

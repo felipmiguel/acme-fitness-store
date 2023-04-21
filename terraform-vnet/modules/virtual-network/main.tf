@@ -162,3 +162,17 @@ resource "azurerm_subnet" "private_endpoints_subnet" {
   address_prefixes                          = [var.private_endpoints_subnet_prefix]
   private_endpoint_network_policies_enabled = true
 }
+
+
+resource "azurecaf_name" "aks_subnet" {
+  name          = var.application_name
+  resource_type = "azurerm_subnet"
+  suffixes      = [var.environment, "aks"]
+}
+
+resource "azurerm_subnet" "aks_subnet" {
+  name                 = azurecaf_name.aks_subnet.result
+  resource_group_name  = var.resource_group
+  virtual_network_name = azurerm_virtual_network.virtual_network.name
+  address_prefixes     = [var.aks_subnet_prefix]
+}

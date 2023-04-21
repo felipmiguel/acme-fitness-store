@@ -31,7 +31,7 @@ locals {
   listener_name                  = "${var.application_name}-httplstn"
   request_routing_rule_name      = "${var.application_name}-rqrt"
   redirect_configuration_name    = "${var.application_name}-rdrcfg"
-  rootcert_name                  = "${var.application_name}-rootcert"
+  # rootcert_name                  = "${var.application_name}-rootcert"
   cert_name                      = "${var.application_name}-cert"
   probe_name                     = "${var.application_name}-probe"
 }
@@ -88,7 +88,7 @@ resource "azurerm_application_gateway" "app_gateway" {
     protocol                            = "Https"
     request_timeout                     = 60
     pick_host_name_from_backend_address = false
-    trusted_root_certificate_names      = [local.rootcert_name]
+    # trusted_root_certificate_names      = [local.rootcert_name]
     probe_name                          = local.probe_name
   }
 
@@ -146,10 +146,10 @@ resource "azurerm_application_gateway" "app_gateway" {
     priority                   = 100
   }
 
-  trusted_root_certificate {
-    name                = local.rootcert_name
-    key_vault_secret_id = var.certificate_secret_id
-  }
+  # trusted_root_certificate {
+  #   name                = local.rootcert_name
+  #   key_vault_secret_id = var.certificate_secret_id
+  # }
 
   ssl_certificate {
     name                = local.cert_name
