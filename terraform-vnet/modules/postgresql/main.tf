@@ -61,6 +61,12 @@ resource "azurerm_postgresql_flexible_server_configuration" "uuid_extension" {
   value     = "uuid-ossp"
 }
 
+resource "azurerm_postgresql_flexible_server_configuration" "max_connections" {
+  server_id = azurerm_postgresql_flexible_server.database.id
+  name      = "MAX_CONNECTIONS"
+  value     = "5000"
+}
+
 resource "azurecaf_name" "postgresql_database" {
   name          = var.application_name
   resource_type = "azurerm_postgresql_flexible_server_database"
