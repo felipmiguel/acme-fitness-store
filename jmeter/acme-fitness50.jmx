@@ -15,17 +15,17 @@
           </elementProp>
           <elementProp name="threads" elementType="Argument">
             <stringProp name="Argument.name">threads</stringProp>
-            <stringProp name="Argument.value">180</stringProp>
+            <stringProp name="Argument.value">250</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="loopcount" elementType="Argument">
             <stringProp name="Argument.name">loopcount</stringProp>
-            <stringProp name="Argument.value">1000000</stringProp>
+            <stringProp name="Argument.value">10000</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="rumpup" elementType="Argument">
             <stringProp name="Argument.name">rumpup</stringProp>
-            <stringProp name="Argument.value">300</stringProp>
+            <stringProp name="Argument.value">60</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -33,39 +33,14 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
-      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-        <collectionProp name="Arguments.arguments">
-          <elementProp name="mainurl" elementType="Argument">
-            <stringProp name="Argument.name">mainurl</stringProp>
-            <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;mainurl&quot;) )}</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="threads" elementType="Argument">
-            <stringProp name="Argument.name">threads</stringProp>
-            <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;threads&quot;) )}</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="loopcount" elementType="Argument">
-            <stringProp name="Argument.name">loopcount</stringProp>
-            <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;loopcount&quot;) )}</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-          <elementProp name="rumpup" elementType="Argument">
-            <stringProp name="Argument.name">rumpup</stringProp>
-            <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;rumpup&quot;) )}</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
-        </collectionProp>
-      </Arguments>
-      <hashTree/>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Catalog" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <intProp name="LoopController.loops">-1</intProp>
+          <stringProp name="LoopController.loops">${loopcount}</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">${threads}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time"></stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${rumpup}</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
@@ -283,7 +258,7 @@
           <stringProp name="HTTPSampler.response_timeout"></stringProp>
         </ConfigTestElement>
         <hashTree/>
-        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="false">
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
