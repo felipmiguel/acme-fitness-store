@@ -38,8 +38,8 @@ resource "azurerm_spring_cloud_build_deployment" "application_deployment" {
   build_result_id     = var.build_result_id
 
   quota {
-    cpu    = "1"
-    memory = "1Gi"
+    cpu    = var.cpu
+    memory = var.memory
   }
   environment_variables = merge(var.environment_variables, local.app_env_vars)
 }

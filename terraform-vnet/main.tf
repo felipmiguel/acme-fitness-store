@@ -13,10 +13,10 @@ terraform {
     }
   }
   backend "azurerm" {
-      resource_group_name  = "rg-terraform-state"
-      storage_account_name = "acmetfstate"
-      container_name       = "tfstate"
-      key                  = "terraform.tfstate"
+    resource_group_name  = "rg-terraform-state"
+    storage_account_name = "acmetfstate"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
   }
 }
 
@@ -93,15 +93,44 @@ module "application" {
   dns_name        = var.dns_name
 }
 
-module "database" {
-  source           = "./modules/postgresql"
-  resource_group   = azurerm_resource_group.main.name
-  application_name = var.application_name
-  environment      = local.environment
-  location         = var.location
-
-  subnet_id          = module.network.database_subnet_id
+module "private_dns" {
+  source             = "./modules/dns"
+  resource_group     = azurerm_resource_group.main.name
+  application_name   = var.application_name
+  environment        = local.environment
+  location           = var.location
   virtual_network_id = module.network.virtual_network_id
+  dns_zone           = "db1.private.postgres.database.azure.com"
+}
+
+module "database" {
+  source              = "./modules/postgresql"
+  resource_group      = azurerm_resource_group.main.name
+  application_name    = var.application_name
+  environment         = local.environment
+  location            = var.location
+  subnet_id           = module.network.database_subnet_id
+  virtual_network_id  = module.network.virtual_network_id
+  sku                 = "GP_Standard_D16ds_v4"
+  private_dns_zone_id = module.private_dns.private_dns_zone_id
+  depends_on = [
+    module.private_dns
+  ]
+}
+
+module "database_max" {
+  source              = "./modules/postgresql"
+  resource_group      = azurerm_resource_group.main.name
+  application_name    = var.application_name
+  environment         = "${local.environment}max"
+  location            = var.location
+  subnet_id           = module.network.database_subnet_id
+  virtual_network_id  = module.network.virtual_network_id
+  sku                 = "GP_Standard_D64ds_v4"
+  private_dns_zone_id = module.private_dns.private_dns_zone_id
+  depends_on = [
+    module.private_dns
+  ]
 }
 
 module "redis" {
@@ -255,6 +284,136 @@ module "cart_service" {
 #   spring_cloud_id    = module.catalog_service.spring_cloud_id
 #   target_resource_id = module.database.database_id
 # }
+
+module "catalog_service_round_0" {
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "catalog-service-0"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/catalog-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = true
+  assign_public_endpoint     = true
+  environment_variables = {
+    "JAVA_OPTION_TOOLS" = "-XX:ActiveProcessorCount=2"
+  }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-0-default/results/1"
+  memory          = "2Gi"
+  cpu             = "2"
+}
+
+resource "azurerm_spring_cloud_connection" "catalog_service_connection_0" {
+  name = "catalog_service_db"
+  authentication {
+    type   = "secret"
+    name   = module.database.database_username
+    secret = module.database.database_password
+  }
+
+  client_type        = "springBoot"
+  spring_cloud_id    = module.catalog_service_round_0.spring_cloud_id
+  target_resource_id = module.database.database_id
+}
+
+module "catalog_service_round_1" {
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "catalog-service-1"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/catalog-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = true
+  assign_public_endpoint     = true
+  environment_variables = {
+    "JAVA_OPTION_TOOLS"                        = "-XX:ActiveProcessorCount=2"
+    "SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE" = "70"
+  }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-1-default/results/1"
+  memory          = "2Gi"
+  cpu             = "2"
+}
+
+resource "azurerm_spring_cloud_connection" "catalog_service_connection_1" {
+  name = "catalog_service_db"
+  authentication {
+    type   = "secret"
+    name   = module.database.database_username
+    secret = module.database.database_password
+  }
+
+  client_type        = "springBoot"
+  spring_cloud_id    = module.catalog_service_round_1.spring_cloud_id
+  target_resource_id = module.database.database_id
+}
+
+module "catalog_service_round_2" {
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "catalog-service-2"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/catalog-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = true
+  assign_public_endpoint     = true
+  environment_variables = {
+    "JAVA_OPTION_TOOLS"                        = "-XX:ActiveProcessorCount=2"
+    "SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE" = "70"
+  }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-2-default/results/1"
+  memory          = "2Gi"
+  cpu             = "2"
+}
+
+resource "azurerm_spring_cloud_connection" "catalog_service_connection_2" {
+  name = "catalog_service_db"
+  authentication {
+    type   = "secret"
+    name   = module.database_max.database_username
+    secret = module.database_max.database_password
+  }
+
+  client_type        = "springBoot"
+  spring_cloud_id    = module.catalog_service_round_2.spring_cloud_id
+  target_resource_id = module.database_max.database_id
+
+}
+
+module "catalog_service_round_3" {
+  source                     = "./modules/app"
+  resource_group             = azurerm_resource_group.main.name
+  application_name           = "catalog-service-3"
+  runtime_version            = "Java_17"
+  spring_apps_service_name   = module.application.spring_cloud_service_name
+  cloud_gateway_id           = module.application.cloud_gateway_id
+  gateway_routes             = jsondecode(file("../routes/catalog-service.json"))
+  service_registry_bind      = false
+  configuration_service_bind = true
+  assign_public_endpoint     = true
+  environment_variables = {
+    "JAVA_OPTION_TOOLS"                        = "-XX:ActiveProcessorCount=2"
+    "SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE" = "4"
+  }
+  build_result_id = "/subscriptions/a4ab3025-1b32-4394-92e0-d07c1ebf3787/resourceGroups/Fitness-Store-Prod-VNET/providers/Microsoft.AppPlatform/Spring/fitness-store-prod-vnet/buildServices/default/builds/catalog-service-3-default/results/1"
+  memory          = "2Gi"
+  cpu             = "2"
+}
+
+resource "azurerm_spring_cloud_connection" "catalog_service_connection_3" {
+  name = "catalog_service_db"
+  authentication {
+    type = "secret"
+  }
+
+  client_type        = "springBoot"
+  spring_cloud_id    = module.catalog_service_round_3.spring_cloud_id
+  target_resource_id = module.database.database_id
+}
 
 // frontend
 module "frontend" {

@@ -22,30 +22,13 @@ variable "location" {
   default     = ""
 }
 
-variable "administrator_login" {
-  type        = string
-  description = "The PostgreSQL administrator login"
-  default     = "dbadmin"
-}
-
 variable "virtual_network_id" {
   type        = string
   description = "Azure Virtual Network ID"
 }
 
-variable "subnet_id" {
-  type        = string
-  description = "The Subnet from which the access is allowed"
-}
-
-variable "sku" {
-  type        = string
-  description = "The SKU of the PostgreSQL server"
-  default     = "GP_Standard_D16ds_v4"
-}
-
-
-variable "private_dns_zone_id" {
-  type        = string
-  description = "The Private DNS Zone ID"
+variable "dns_zone"{
+    type        = string
+    description = "The DNS zone"
+    default     = "db1.private.postgres.database.azure.com"
 }

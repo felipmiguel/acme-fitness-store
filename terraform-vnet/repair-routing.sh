@@ -15,6 +15,9 @@ readonly IDENTITY_SERVICE="identity-service"
 readonly ORDER_SERVICE="order-service"
 readonly PAYMENT_SERVICE="payment-service"
 readonly CATALOG_SERVICE="catalog-service"
+readonly CATALOG_SERVICE1="catalog-service-1"
+readonly CATALOG_SERVICE2="catalog-service-2"
+readonly CATALOG_SERVICE3="catalog-service-3"
 readonly CATALOG_SERVICE_COSMOS="catalog-service-cosmos"
 readonly CATALOG_SERVICE_COSMOS2="catalog-service-cosmos2"
 readonly FRONTEND_APP="frontend"
@@ -126,6 +129,41 @@ function deploy_catalog_service() {
         --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
 }
 
+function deploy_catalog_service_1() {
+    echo "Deploying catalog-service application 1"
+
+    az spring app deploy --name $CATALOG_SERVICE_1 \
+        --config-file-pattern catalog/default \
+        --source-path "$APPS_ROOT/acme-catalog" \
+        --build-env BP_JVM_VERSION=17.* \
+        --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
+}
+
+
+function deploy_catalog_service_2() {
+    echo "Deploying catalog-service application 2"
+
+    az spring app deploy --name $CATALOG_SERVICE_2 \
+        --config-file-pattern catalog/default \
+        --source-path "$APPS_ROOT/acme-catalog" \
+        --build-env BP_JVM_VERSION=17.* \
+        --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
+}
+
+
+function deploy_catalog_service_3() {
+    echo "Deploying catalog-service application"
+
+    az spring app deploy --name $CATALOG_SERVICE_2 \
+        --config-file-pattern catalog/default \
+        --source-path "$APPS_ROOT/acme-catalog" \
+        --build-env BP_JVM_VERSION=17.* \
+        --env "SPRING_DATASOURCE_AZURE_PASSWORDLESSENABLED=true"
+}
+
+
+
+
 function deploy_catalog_service_cosmos() {
     echo "Deploying catalog-service-cosmos application"
 
@@ -231,8 +269,8 @@ function retrieve_parameters() {
 function main() {
     retrieve_parameters
     configure_defaults
-    repair_all    
-    configure_gateway
+    # repair_all    
+    # configure_gateway
     deploy_all
 }
 

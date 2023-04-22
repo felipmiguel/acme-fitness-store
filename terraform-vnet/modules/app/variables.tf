@@ -102,3 +102,15 @@ variable "build_result_id" {
   description = "The ID of the build to deploy"
   default     = "<default>"
 }
+
+variable "cpu" {
+  type        = string
+  description = "The CPU quota"
+  default     = "1"
+}
+
+variable "memory" {
+  type        = string
+  description = "The memory quota"
+  default     = "1Gi"  
+}

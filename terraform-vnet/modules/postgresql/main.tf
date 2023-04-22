@@ -27,7 +27,8 @@ resource "azurerm_postgresql_flexible_server" "database" {
   administrator_login    = var.administrator_login
   administrator_password = random_password.password.result
 
-  sku_name                     = "GP_Standard_D16ds_v4"
+  # sku_name                     = "GP_Standard_D16ds_v4"
+  sku_name                     = var.sku
   storage_mb                   = 32768
   backup_retention_days        = 7
   version                      = "14"
@@ -38,8 +39,8 @@ resource "azurerm_postgresql_flexible_server" "database" {
   }
   zone                = "2"
   delegated_subnet_id = var.subnet_id
-  private_dns_zone_id = azurerm_private_dns_zone.database.id
-  depends_on          = [azurerm_private_dns_zone_virtual_network_link.database]
+  private_dns_zone_id = var.private_dns_zone_id
+  # depends_on          = [azurerm_private_dns_zone_virtual_network_link.database]
 
   tags = {
     "environment"      = var.environment
@@ -80,23 +81,7 @@ resource "azurerm_postgresql_flexible_server_database" "database" {
   collation = "en_US.utf8"
 }
 
-resource "azurerm_private_dns_zone" "database" {
-  name                = "db1.private.postgres.database.azure.com"
-  resource_group_name = var.resource_group
-}
 
-resource "azurecaf_name" "private_dns_zone_virtual_network_link" {
-  name          = var.application_name
-  resource_type = "azurerm_private_dns_zone_virtual_network_link"
-  suffixes      = [var.environment]
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "database" {
-  name                  = azurecaf_name.private_dns_zone_virtual_network_link.result
-  resource_group_name   = var.resource_group
-  private_dns_zone_name = azurerm_private_dns_zone.database.name
-  virtual_network_id    = var.virtual_network_id
-}
 
 data "azurerm_client_config" "current" {}
 
